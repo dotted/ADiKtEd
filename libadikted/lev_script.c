@@ -489,7 +489,7 @@ const char orient_tpwe_cmdtext[]="ORIENT_TOPWE";
 const char orient_tpsn_cmdtext[]="ORIENT_TOPSN";
 const char orient_tpew_cmdtext[]="ORIENT_TOPEW";
 
-const short orient_constants[]={
+const unsigned short orient_constants[]={
         ORIENT_NS,ORIENT_WE,ORIENT_SN,ORIENT_EW,
         ORIENT_TNS,ORIENT_TWE,ORIENT_TSN,ORIENT_TEW
         };
@@ -5036,7 +5036,7 @@ short add_stats_to_script(char ***lines,int *lines_count,struct LEVEL *lvl)
         max_len=max(max_len,strlen(lvl->info.author_text)+strlen(lvl->info.editor_text)+(LINEMSG_SIZE>>1));
     line=(char *)malloc(max_len*sizeof(char));
     tmp=(char *)malloc(max_len*sizeof(char));
-    unsigned long curr_time=time(NULL);
+    time_t curr_time=time(NULL);
     /* Script header */
     tmp2=prepare_short_fname(lvl->savfname,24);
     sprintf(line,"%s %s script file for %s",rem_cmdtext,PROGRAM_NAME,tmp2);
@@ -5051,7 +5051,8 @@ short add_stats_to_script(char ***lines,int *lines_count,struct LEVEL *lvl)
         lvl->info.ver_minor,lvl->info.ver_rel);
     text_file_linecp_add(lines,lines_count,line);
     /* Map creation date */
-    sprintf(line,"%s(%lu,%lu)",leveltimestmp_cmdtext,lvl->info.creat_date,curr_time);
+    sprintf(line,"%s(%llu,%llu)",leveltimestmp_cmdtext,
+        (unsigned long long)lvl->info.creat_date,(unsigned long long)curr_time);
     text_file_linecp_add(lines,lines_count,line);
     /* User commands count */
     sprintf(line,"%s(%lu,%lu,%lu,%lu)",usrcmnds_count_cmdtext,lvl->info.usr_cmds_count,
