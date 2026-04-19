@@ -1,13 +1,22 @@
-# Adikted Dungeon Keeper Map Editor
+# ADiKtEd
 
-Note - there is now a manual available for ADiKtEd.
-It even includes a basic tutorial to quickly learn the program.
-A version of it is included within this distribution,
-called `dk_adikted_manual.htm`. You may wish to print this out.
+ADiKtEd is a Dungeon Keeper map editing project that contains both the classic terminal-style editor and a reusable C library for reading, modifying, and writing map data.
+
+This repository currently builds:
+
+- `libadikted`, a C library with installed headers, CMake package metadata, and pkg-config metadata
+- `map`, the `mapslang`-based ADiKtEd editor frontend
+- optional SDL-based example programs that demonstrate library usage
+
+## What This Repo Contains
+
+- [`libadikted/`](libadikted/) contains the core map editing library and installed public headers
+- [`mapslang/`](mapslang/) contains the `map` executable, a text UI frontend built on S-Lang
+- [`examples/`](examples/) contains optional SDL-based sample programs such as `putgems`, `puttrain`, `viewmap`, and `putemple`
+- [`docs/`](docs/) contains manuals and reference material for ADiKtEd and Dungeon Keeper level scripting
+- [`cmake/`](cmake/) contains packaging helpers and dependency logic, including S-Lang resolution for `mapslang`
 
 ## Build
-
-### Root CMake workflow
 
 Configure from the repository root:
 
@@ -17,35 +26,32 @@ cmake --build build
 cmake --install build
 ```
 
-Inside an MSYS2 `MINGW32` or `MINGW64` shell, use the default `Unix Makefiles` generator and point CMake at the MinGW compiler if needed:
+Important CMake options:
 
-```sh
-cmake -S . -B build-mingw32 -DCMAKE_C_COMPILER=/mingw32/bin/gcc
-cmake --build build-mingw32
-cmake --install build-mingw32
-```
+- `-DMAPSLANG_BUILD=OFF` builds only `libadikted`
+- `-DADIKTED_BUILD_EXAMPLES=ON` builds the SDL example programs
+- `-DMAPSLANG_FETCH_SLANG=ON` allows CMake to fetch and build S-Lang 2.3.2 when `mapslang` cannot find a compatible installation
+- `-DMAPSLANG_SLANG_SOURCE=release` or `git` selects the source used by the S-Lang fallback
 
-Optional switches:
+By default, the project installs into `build/install` unless `CMAKE_INSTALL_PREFIX` is set explicitly.
 
-- `-DADIKTED_BUILD_EXAMPLES=ON` builds the example programs.
-- `-DMAPSLANG_BUILD=OFF` builds only `libadikted`.
-- `-DMAPSLANG_FETCH_SLANG=ON` fetches and builds S-Lang 2.3.2 when `mapslang` cannot find a system installation. This fallback supports MinGW-based Windows builds plus Unix-like builds on Linux and macOS.
+## Dependencies
 
-### S-Lang for `mapslang`
+Required:
 
-`mapslang` depends on Jedsoft S-Lang 2.3.2.
-The CMake build first looks for a system installation and can fall back to fetching either:
+- a C99-capable compiler
+- CMake 3.15 or newer
+- S-Lang 2.3.2 for the `map` editor, unless you disable `MAPSLANG_BUILD`
 
-- the release tarball: `https://www.jedsoft.org/releases/slang/slang-2.3.2.tar.bz2`
-- the upstream Git tag: `git://git.jedsoft.org/git/slang.git` at `v2.3.2`
+Optional:
 
-The fallback is mainly intended for MinGW-based Windows builds and environments without packaged S-Lang.
-System S-Lang is preferred on every platform.
-For non-MinGW Windows builds, either provide a compatible S-Lang installation or configure with `-DMAPSLANG_BUILD=OFF` to build only `libadikted`.
+- SDL for the example programs enabled with `ADIKTED_BUILD_EXAMPLES`
 
-## Using `libadikted` from another CMake project
+The build first tries to find a system S-Lang installation for `mapslang`. When enabled, the fallback fetch path is mainly intended for MinGW-based Windows builds and for Unix-like environments that do not package S-Lang.
 
-After installing `libadikted`, external CMake projects can consume the library with:
+## Install And Use `libadikted`
+
+After installation, external CMake projects can consume the library with:
 
 ```cmake
 find_package(libadikted CONFIG REQUIRED)
@@ -58,33 +64,53 @@ Headers are installed under `include/libadikted`, so consumers can include:
 #include <libadikted/adikted.h>
 ```
 
-## Usage
+The install also provides pkg-config metadata as `libadikted.pc`.
 
-Run `map [mapfile] [-m <logfile>] [-v] [-r] [-n] [-s [mapfile]] [-q]`
+## Using ADiKtEd
 
-When ADiKtEd saves a map, it will ask you what you wish to call it
-(unless you're not using quick save). I suggest you don't save
-directly over the Dungeon Keeper original levels, but keep it
-in the current directory until you're finished.
-Then, at end, save it on `map00001` to access it easily in the game.
+The editor frontend built from [`mapslang/`](mapslang/) installs as `map`.
 
-You'll need a level script for your newly created level. You may be
-able to get by with the script which comes with the original level 1
-- ie just copy it and paste into TXT file of your new map - but
-if not, study the level scripts reference from `dk_scripting_ref.htm`.
-You can also try looking at the original DK and DD levels for examples.
+The historical command-line interface follows the form:
 
-Press F1 for help.
+```sh
+map [mapfile] [options]
+```
 
-## TODO before final
+The detailed editor workflow, keyboard help, map installation guidance, and scripting background are better covered by the bundled manuals than by the top-level README. If you are approaching ADiKtEd as an end user rather than a library consumer, start with the editor manual and installation guide linked below.
 
-- Fixations in room things parameters (height,other)
-- Fixations in room corner graphics
+## Examples
 
-## Author
+The example programs are optional and are not built by default. They are primarily useful as small integration samples for `libadikted`.
 
-Jon Skeet, skeet@pobox.com
+- `putgems` loads a level and changes slabs
+- `puttrain` demonstrates editing a room area and using the internal message system
+- `viewmap` renders maps graphically with SDL
+- `putemple` demonstrates interactive drawing and fast rendering routines
 
-Dev-C++ IDE version,
-rewritten most of the code:
-Tomasz Lis
+These targets require SDL and are enabled with `-DADIKTED_BUILD_EXAMPLES=ON`.
+
+## Documentation
+
+Bundled local references:
+
+- [`docs/dk_adikted_manual.htm`](docs/dk_adikted_manual.htm) for the ADiKtEd editor manual and quick start
+- [`docs/dk_editor_hdinst.htm`](docs/dk_editor_hdinst.htm) for installation and playing edited maps
+- [`docs/dk_scripting_ref.htm`](docs/dk_scripting_ref.htm) for Dungeon Keeper level scripting reference
+
+Additional external reference:
+
+- [Dungeon Keeper documentation mirror](https://keeper.lubiki.pl/dk1_docs/)
+
+The external mirror appears to include fan-maintained and expanded documentation, especially around scripting and editor usage. It is a helpful cross-reference when the bundled docs look incomplete or stale, but the repository build files remain authoritative for how this project is configured and packaged today.
+
+## History And Maintainers
+
+- Original creator: [Jon Skeet](https://jonskeet.uk/dk/)
+- Former maintainer: [mefistotelis](https://github.com/mefistotelis)
+- Current maintainers: [Dungeon Keeper Fans and Contributors](https://github.com/dkfans)
+
+This repository preserves a long-lived community toolchain around Dungeon Keeper map editing while also exposing the reusable `libadikted` library for automation and integration work.
+
+## License
+
+ADiKtEd is distributed under the terms included in [`LICENSE`](LICENSE).
