@@ -61,6 +61,7 @@ struct IPOINT_2D;
 #define SLAB_TYPE_BRIDGE       0x33
 #define SLAB_TYPE_GEMS         0x34
 #define SLAB_TYPE_GUARDPOST    0x35
+#define SLAB_TYPE_PURPLE_PATH  0x36
 
 #define PLAYERS_COUNT          6
 #define PLAYER0                0x00
@@ -106,6 +107,7 @@ extern char const SLB_DOORMAGIC_LTEXT[];
 extern char const SLB_BRIDGE_LTEXT[];
 extern char const SLB_GEMS_LTEXT[];
 extern char const SLB_GUARDPOST_LTEXT[];
+extern char const SLB_PURPLEPATH_LTEXT[];
 
 DLLIMPORT short slab_is_central(struct LEVEL *lvl,int x,int y);
 DLLIMPORT short slabs_verify(struct LEVEL *lvl, char *err_msg,struct IPOINT_2D *errpt);

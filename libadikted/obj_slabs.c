@@ -60,6 +60,7 @@ char const SLB_DOORMAGIC_LTEXT[]="Magic door";
 char const SLB_BRIDGE_LTEXT[]="Bridge";
 char const SLB_GEMS_LTEXT[]="Gems";
 char const SLB_GUARDPOST_LTEXT[]="Guard post";
+char const SLB_PURPLEPATH_LTEXT[]="Purple path";
 
 const char *owner_fullnames[]={"Keeper 0 (Human)", "Keeper 1 (blue)", "Keeper 2 (green)",
     "Keeper 3 (yellow)", "Heroes (Player4)", "Unclaimed/Unowned"};
@@ -143,6 +144,8 @@ const char *all_slabs_fullnames[]={
      SLB_DOORMAGIC_LTEXT,SLB_DOORMAGIC_LTEXT, /*2f */
      SLB_UNKN_LTEXT,SLB_BRIDGE_LTEXT,
      SLB_GEMS_LTEXT,SLB_GUARDPOST_LTEXT,
+     SLB_PURPLEPATH_LTEXT,
+     SLB_UNKN_LTEXT,
      };
 
 unsigned char get_owner_next(unsigned char plyr_idx)

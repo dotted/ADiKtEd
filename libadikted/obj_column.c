@@ -249,8 +249,11 @@ void create_columns_for_slab(struct COLUMN_REC *clm_recs[9],struct LEVOPTIONS *o
     case SLAB_TYPE_GUARDPOST:
       create_columns_slb_guardpost(clm_recs,surr_slb,surr_own,surr_tng);
       break;
-    default: /*on error, make path */
-      create_columns_slb_path(clm_recs,surr_slb,surr_own,surr_tng);
+    case SLAB_TYPE_PURPLE_PATH:
+      create_columns_slb_purple_path(clm_recs,surr_slb,surr_own,surr_tng);
+      break;
+    default: /*on error, make purple_path */
+      create_columns_slb_purple_path(clm_recs,surr_slb,surr_own,surr_tng);
       break;
     }
 }
@@ -1093,6 +1096,18 @@ void create_columns_slb_path(struct COLUMN_REC *clm_recs[9],
    for (k=0;k<3;k++)
    {
      fill_column_path(clm_recs[k*3+i],surr_own[IDIR_CENTR]);
+   }
+  modify_liquid_surrounding(clm_recs, surr_slb, 0, 0x02e, 0x02f);
+}
+
+void create_columns_slb_purple_path(struct COLUMN_REC *clm_recs[9],
+        unsigned char *surr_slb,unsigned char *surr_own, __attribute__((unused)) unsigned char **surr_tng)
+{
+  int i,k;
+  for (i=0;i<3;i++)
+   for (k=0;k<3;k++)
+   {
+     fill_column_purple_path(clm_recs[k*3+i],surr_own[IDIR_CENTR]);
    }
   modify_liquid_surrounding(clm_recs, surr_slb, 0, 0x02e, 0x02f);
 }

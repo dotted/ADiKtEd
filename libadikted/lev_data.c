@@ -2403,8 +2403,8 @@ short get_slx_tileset(const struct LEVEL *lvl, unsigned int tx, unsigned int ty)
 {
     if (lvl->slb==NULL) return 0;
     /*Bounding position */
-    if ( (tx >= MAP_SIZE_DKSTD_X) || (ty >= MAP_SIZE_DKSTD_Y) ) return 0;
-    return (lvl->slx_data[tx + ty * MAP_SIZE_DKSTD_Y] & 0x0F);
+    if ( (tx >= lvl->tlsize.x) || (ty >= lvl->tlsize.y) ) return 0;
+    return (lvl->slx_data[tx + ty * lvl->tlsize.x] & 0x0F);
 }
 
 /**
@@ -2417,9 +2417,9 @@ short get_slx_tileset(const struct LEVEL *lvl, unsigned int tx, unsigned int ty)
 void set_slx_tileset(struct LEVEL *lvl, unsigned int tx, unsigned int ty, unsigned short nval)
 {
     /*Bounding position */
-    if ( (tx >= MAP_SIZE_DKSTD_X) || (ty >= MAP_SIZE_DKSTD_Y) ) return;
-    lvl->slx_data[tx + ty * MAP_SIZE_DKSTD_Y] &= 0xF0;
-    lvl->slx_data[tx + ty * MAP_SIZE_DKSTD_Y] |= nval & 0x0F;
+    if ( (tx >= lvl->tlsize.x) || (ty >= lvl->tlsize.y) ) return;
+    lvl->slx_data[tx + ty * lvl->tlsize.x] &= 0xF0;
+    lvl->slx_data[tx + ty * lvl->tlsize.x] |= nval & 0x0F;
 }
 
 /**

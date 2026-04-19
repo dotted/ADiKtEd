@@ -24,6 +24,8 @@
 
 #define MAP_SIZE_DKSTD_X 85
 #define MAP_SIZE_DKSTD_Y 85
+#define MAX_MAP_SIZE_DKXPAND_X 500
+#define MAX_MAP_SIZE_DKXPAND_Y 500
 #define MAP_SIZE_H 1
 #define MAP_SUBNUM_H 8
 #define MAP_SUBNUM_X 3
@@ -369,7 +371,7 @@ struct LEVEL {
     struct DK_GRAFFITI **graffiti;
     unsigned int graffiti_count;
 
-    unsigned char slx_data[MAP_SIZE_DKSTD_X * MAP_SIZE_DKSTD_Y];
+    unsigned char slx_data[MAX_MAP_SIZE_DKXPAND_X * MAX_MAP_SIZE_DKXPAND_Y];
   };
 
 extern const char default_map_name[];

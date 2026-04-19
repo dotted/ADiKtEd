@@ -1324,6 +1324,73 @@ short write_lif(struct LEVEL *lvl,char *fname)
 }
 
 /**
+ * Writes the LOF file from LEVEL structure into disk.
+ * LOFs are used to save text name of the level and some extra data like mapsize etc
+ * only in extended format.
+ * @param lvl Pointer to the LEVEL structure.
+ * @param fname Destination file name.
+ * @return Returns ERR_NONE on success, error code on failure.
+ */
+short write_lof(struct LEVEL *lvl,char *fname)
+{
+    message_log(" write_lof: starting");
+
+    /*Creating text lines */
+    char **lines=(char **)malloc(13*sizeof(char *));
+    int lines_count=0;
+    for (size_t i = 0; i < 13; i++)
+    {
+        lines[i]=malloc(LINEMSG_SIZE+1);
+    }
+    
+    sprintf(lines[lines_count],"; KeeperFX Level Overview File (LOF)");
+    lines_count++;
+    char* nameText = get_lif_name_text(lvl);
+    sprintf(lines[lines_count],"NAME_TEXT = %s",nameText);
+    lines_count++;
+    char* nameId = "";
+    sprintf(lines[lines_count],"NAME_ID = %s",nameId);
+    lines_count++;
+    char* kind = "FREE";
+    sprintf(lines[lines_count],"KIND = %s",kind);
+    lines_count++;
+    char* ensignPos = "";
+    sprintf(lines[lines_count],"ENSIGN_POS = %s",ensignPos);
+    lines_count++;
+    char* ensignZoom = "";
+    sprintf(lines[lines_count],"ENSIGN_ZOOM = %s",ensignZoom);
+    lines_count++;
+    char* Players = "";
+    sprintf(lines[lines_count],"PLAYERS = %s",Players);
+    lines_count++;
+    char* Options = "";
+    sprintf(lines[lines_count],"OPTIONS = %s",Options);
+    lines_count++;
+    char* Speech = "";
+    sprintf(lines[lines_count],"SPEECH = %s",Speech);
+    lines_count++;
+    char* landView = "";
+    sprintf(lines[lines_count],"LAND_VIEW = %s",landView);
+    lines_count++;
+    char* author = lvl->info.author_text;
+    if (author==NULL) author="";
+    sprintf(lines[lines_count],"AUTHOR = %s",author);
+    lines_count++;
+    char* description = lvl->info.desc_text;
+    if (description==NULL) description="";
+    sprintf(lines[lines_count],"DESCRIPTION = %s",description);
+    lines_count++;
+    sprintf(lines[lines_count],"MAPSIZE = %d %d",lvl->tlsize.x,lvl->tlsize.y);
+    lines_count++;
+
+    short result;
+    result=write_text_file(lines,lines_count,fname);
+    text_file_free(lines,lines_count);
+    return result;
+
+}
+
+/**
  * Writes the ADI script file from LEVEL structure into disk.
  * Creates the file data first it - is not stored directly in LEVEL.
  * @param lvl Pointer to the LEVEL structure.
@@ -1496,7 +1563,7 @@ short write_slx(struct LEVEL *lvl,char *fname)
   FILE* fp = fopen(fname, "wb");
   if (fp==NULL)
     return ERR_CANT_OPENWR;
-  fwrite(lvl->slx_data, sizeof(lvl->slx_data), 1, fp);
+  fwrite(lvl->slx_data, lvl->tlsize.x * lvl->tlsize.y, 1, fp);
   fclose(fp);
   return ERR_NONE;
 }
@@ -1633,39 +1700,39 @@ short save_dke_map(struct LEVEL *lvl)
     int saved_files=0;
     int total_files=0;
 
-      message_error("Error: Save not supported for extender map format");
-      result=ERR_INTERNAL;
-/*
-    save_mapfile(lvl,"slb",write_slb,&saved_files,&result);
+    save_mapfile(lvl,lvl->savfname,"slb",write_slb,&saved_files,&result);
     total_files++;
-    save_mapfile(lvl,"own",write_own,&saved_files,&result);
+    save_mapfile(lvl,lvl->savfname,"own",write_own,&saved_files,&result);
     total_files++;
-    save_mapfile(lvl,"dat",write_dat,&saved_files,&result);
+    save_mapfile(lvl,lvl->savfname,"dat",write_dat,&saved_files,&result);
     total_files++;
-    save_mapfile(lvl,"clm",write_clm,&saved_files,&result);
+    save_mapfile(lvl,lvl->savfname,"clm",write_clm,&saved_files,&result);
     total_files++;
-    save_mapfile(lvl,"tng",write_tng,&saved_files,&result);
+    //TODO replace with tngfx
+    save_mapfile(lvl,lvl->savfname,"tng",write_tng,&saved_files,&result);
     total_files++;
-    save_mapfile(lvl,"apt",write_apt,&saved_files,&result);
+    //TODO replace with aptfx
+    save_mapfile(lvl,lvl->savfname,"apt",write_apt,&saved_files,&result);
     total_files++;
-    save_mapfile(lvl,"wib",write_wib,&saved_files,&result);
+    save_mapfile(lvl,lvl->savfname,"wib",write_wib,&saved_files,&result);
     total_files++;
-    save_mapfile(lvl,"inf",write_inf,&saved_files,&result);
+    save_mapfile(lvl,lvl->savfname,"inf",write_inf,&saved_files,&result);
     total_files++;
-    save_mapfile(lvl,"txt",write_txt,&saved_files,&result);
+    save_mapfile(lvl,lvl->savfname,"txt",write_txt,&saved_files,&result);
     total_files++;
-    save_mapfile(lvl,"lgt",write_lgt,&saved_files,&result);
+    //TODO replace with lgtfx
+    save_mapfile(lvl,lvl->savfname,"lgt",write_lgt,&saved_files,&result);
     total_files++;
-    save_mapfile(lvl,"wlb",write_wlb,&saved_files,&result);
+    save_mapfile(lvl,lvl->savfname,"wlb",write_wlb,&saved_files,&result);
     total_files++;
-    save_mapfile(lvl,"flg",write_flg,&saved_files,&result);
+    save_mapfile(lvl,lvl->savfname,"flg",write_flg,&saved_files,&result);
     total_files++;
-    save_mapfile(lvl,"lif",write_lif,&saved_files,&result);
+    save_mapfile(lvl,lvl->savfname,"lof",write_lof,&saved_files,&result);
     total_files++;
-*/
-    save_mapfile(lvl,lvl->savfname,"vsn",write_vsn,&saved_files,&result);
-    total_files++;
+
     save_mapfile(lvl,lvl->savfname,"adi",write_adi_script,&saved_files,&result);
+    total_files++;
+    save_mapfile(lvl,lvl->savfname,"slx",write_slx,&saved_files,&result);
     total_files++;
 
     if ((result==ERR_NONE)||(strlen(lvl->fname)<1))
@@ -2017,14 +2084,14 @@ short load_dke_map(struct LEVEL *lvl)
   if (result>=ERR_NONE)
       load_mapfile(lvl,"own",load_own,&loaded_files,&result,LFF_IGNORE_NONE);
   if (result>=ERR_NONE)
-      load_mapfile(lvl,"tng",load_tng,&loaded_files,&result,LFF_IGNORE_NONE);
+      load_mapfile(lvl,"tngfx",load_tngfx,&loaded_files,&result,LFF_IGNORE_NONE);
   /* Less importand files */
   if (result>=ERR_NONE)
       load_mapfile(lvl,"dat",load_dat,&loaded_files,&result,LFF_IGNORE_ALL);
   if (result>=ERR_NONE)
-      load_mapfile(lvl,"apt",load_apt,&loaded_files,&result,LFF_IGNORE_ALL);
+      load_mapfile(lvl,"aptfx",load_aptfx,&loaded_files,&result,LFF_IGNORE_ALL);
   if (result>=ERR_NONE)
-      load_mapfile(lvl,"lgt",load_lgt,&loaded_files,&result,LFF_IGNORE_ALL);
+      load_mapfile(lvl,"lgtfx",load_lgtfx,&loaded_files,&result,LFF_IGNORE_ALL);
   if (result>=ERR_NONE)
       load_mapfile(lvl,"clm",load_clm,&loaded_files,&result,LFF_IGNORE_ALL);
   if (result>=ERR_NONE)
@@ -2040,10 +2107,12 @@ short load_dke_map(struct LEVEL *lvl)
   if (result>=ERR_NONE)
       load_mapfile(lvl,"flg",load_flg,&loaded_files,&result,LFF_IGNORE_WITHOUT_WARN);
   if (result>=ERR_NONE)
-      load_mapfile(lvl,"lif",load_lif,&loaded_files,&result,LFF_IGNORE_WITHOUT_WARN);
+      load_mapfile(lvl,"lof",load_lof,&loaded_files,&result,LFF_IGNORE_WITHOUT_WARN);
 #endif
   if (result>=ERR_NONE)
       load_mapfile(lvl,"vsn",load_vsn,&loaded_files,&result,LFF_IGNORE_WITHOUT_WARN);
+  if (result>=ERR_NONE)
+      load_mapfile(lvl,"slx",load_slx,&loaded_files,&result,LFF_IGNORE_WITHOUT_WARN);
   if (result>=ERR_NONE)
       load_mapfile_msg(lvl,"adi",script_load_and_execute,&loaded_files,&result,LFF_IGNORE_WITHOUT_WARN);
   if (result<ERR_NONE)

@@ -119,6 +119,8 @@ void create_columns_slb_gems(struct COLUMN_REC *clm_recs[9],
         unsigned char *surr_slb,unsigned char *surr_own, unsigned char **surr_tng);
 void create_columns_slb_guardpost(struct COLUMN_REC *clm_recs[9],
         unsigned char *surr_slb,unsigned char *surr_own, unsigned char **surr_tng);
+void create_columns_slb_purple_path(struct COLUMN_REC *clm_recs[9],
+        unsigned char *surr_slb,unsigned char *surr_own, __attribute__((unused)) unsigned char **surr_tng);
 
 void modify_frail_columns(struct COLUMN_REC *clm_recs[9],
         unsigned char *surr_slb,unsigned char *surr_own, unsigned char **surr_tng);

@@ -110,6 +110,7 @@ void fill_column_rockground(struct COLUMN_REC *clm_rec, unsigned char owner);
 void fill_column_rock_gndlev(struct COLUMN_REC *clm_rec, unsigned char owner);
 void fill_column_wallground_nearwater(struct COLUMN_REC *clm_rec, unsigned char owner);
 void fill_column_wallground_nearlava(struct COLUMN_REC *clm_rec, unsigned char owner);
+void fill_column_purple_path(struct COLUMN_REC *clm_rec, __attribute__((unused)) unsigned char owner);
 
 /* Placing doors */
 

@@ -1266,6 +1266,12 @@ void fill_column_path(struct COLUMN_REC *clm_rec, __attribute__((unused)) unsign
          CUBE_PATH_SMOOTH1 +rnd(5), 0x0, 0x0, 0x0, 0x0, 0, 0, 0);
 }
 
+void fill_column_purple_path(struct COLUMN_REC *clm_rec, __attribute__((unused)) unsigned char owner)
+{
+     fill_column_rec_sim(clm_rec, 0, 1,
+         CUBE_EMPTY1, 0x0, 0x0, 0x0, 0x0, 0, 0, 0);
+}
+
 /*
  * Claimed ground (not claimed wall)
  */

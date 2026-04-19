@@ -644,7 +644,7 @@ This one can contain shaging pair
 relief.
 
 
-Unknown slab
+\rUnknown slab\s
 
 This slab is not used by the game.
 Place it only if you know what
@@ -1002,6 +1002,22 @@ This room is a wooden guard area
 with player's flag on center.
 
 
+
+
+\rPurple path\s
+
+Slab whose appearance is normally
+used when the game cannot process 
+something.
+
+
+
+
+Unknown slab
+
+This slab is not used by the game.
+Place it only if you know what
+you're doing.
 
 
 
