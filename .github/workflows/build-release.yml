@@ -119,7 +119,7 @@ jobs:
             --archive-format "${{ matrix.archive_format }}"
 
       - name: Upload end-user artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.meta.outputs.user_archive }}
           path: dist/${{ steps.meta.outputs.user_archive }}.${{ steps.meta.outputs.archive_extension }}
@@ -127,7 +127,7 @@ jobs:
           retention-days: 7
 
       - name: Upload SDK artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.meta.outputs.sdk_archive }}
           path: dist/${{ steps.meta.outputs.sdk_archive }}.${{ steps.meta.outputs.archive_extension }}
