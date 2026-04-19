@@ -72,7 +72,7 @@ jobs:
             mingw-w64-x86_64-pkgconf
 
       - name: Cache bundled S-Lang dependency
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             build/_deps/slang
