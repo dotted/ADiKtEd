@@ -1,0 +1,154 @@
+name: Build And Release Binaries
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  BUILD_TYPE: Release
+  MAPSLANG_SLANG_SOURCE: release
+  SLANG_VERSION: 2.3.2
+
+jobs:
+  build:
+    name: Build ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux
+            os: ubuntu-latest
+            toolchain: unix
+            archive_format: tar.gz
+          - name: macOS
+            os: macos-latest
+            toolchain: unix
+            archive_format: tar.gz
+          - name: Windows
+            os: windows-latest
+            toolchain: mingw64
+            archive_format: zip
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set artifact metadata
+        id: meta
+        shell: pwsh
+        run: |
+          switch ($env:RUNNER_OS) {
+            "Windows" { $osName = "windows" }
+            "macOS" { $osName = "macos" }
+            default { $osName = "linux" }
+          }
+
+          $archName = $env:RUNNER_ARCH.ToLowerInvariant()
+          $userArchive = "adikted-$osName-$archName"
+          $sdkArchive = "libadikted-sdk-$osName-$archName"
+
+          "os_name=$osName" >> $env:GITHUB_OUTPUT
+          "arch_name=$archName" >> $env:GITHUB_OUTPUT
+          "user_archive=$userArchive" >> $env:GITHUB_OUTPUT
+          "sdk_archive=$sdkArchive" >> $env:GITHUB_OUTPUT
+          "archive_extension=${{ matrix.archive_format }}" >> $env:GITHUB_OUTPUT
+
+      - name: Set up MSYS2 MinGW64
+        if: matrix.toolchain == 'mingw64'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            base-devel
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-make
+            mingw-w64-x86_64-pkgconf
+
+      - name: Cache bundled S-Lang dependency
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/_deps/slang
+          key: slang-${{ runner.os }}-${{ runner.arch }}-${{ matrix.toolchain }}-${{ env.MAPSLANG_SLANG_SOURCE }}-${{ env.SLANG_VERSION }}-${{ hashFiles('cmake/SlangDependency.cmake', 'cmake/slang/**') }}
+          restore-keys: |
+            slang-${{ runner.os }}-${{ runner.arch }}-${{ matrix.toolchain }}-${{ env.MAPSLANG_SLANG_SOURCE }}-${{ env.SLANG_VERSION }}-
+
+      - name: Configure, build, and install
+        if: matrix.toolchain == 'unix'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S . -B build \
+            -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
+            -DADIKTED_BUILD_EXAMPLES=OFF \
+            -DMAPSLANG_FETCH_SLANG=ON \
+            -DMAPSLANG_SLANG_SOURCE="${MAPSLANG_SLANG_SOURCE}"
+          cmake --build build --config "${BUILD_TYPE}" --parallel
+          cmake --install build --prefix "${GITHUB_WORKSPACE}/stage/install"
+
+      - name: Configure, build, and install
+        if: matrix.toolchain == 'mingw64'
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          workspace_root="$(cygpath -u "${GITHUB_WORKSPACE}")"
+          cmake -S . -B build \
+            -G "MinGW Makefiles" \
+            -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
+            -DADIKTED_BUILD_EXAMPLES=OFF \
+            -DMAPSLANG_FETCH_SLANG=ON \
+            -DMAPSLANG_SLANG_SOURCE="${MAPSLANG_SLANG_SOURCE}"
+          cmake --build build --parallel
+          cmake --install build --prefix "${workspace_root}/stage/install"
+
+      - name: Package artifacts
+        shell: pwsh
+        run: |
+          python tools/ci/package_artifacts.py `
+            --install-dir stage/install `
+            --output-dir dist `
+            --user-archive-name "${{ steps.meta.outputs.user_archive }}" `
+            --sdk-archive-name "${{ steps.meta.outputs.sdk_archive }}" `
+            --archive-format "${{ matrix.archive_format }}"
+
+      - name: Upload end-user artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.user_archive }}
+          path: dist/${{ steps.meta.outputs.user_archive }}.${{ steps.meta.outputs.archive_extension }}
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload SDK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.sdk_archive }}
+          path: dist/${{ steps.meta.outputs.sdk_archive }}.${{ steps.meta.outputs.archive_extension }}
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    name: Publish Release Assets
+    needs: build
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download packaged artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/*
+          generate_release_notes: true
