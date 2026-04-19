@@ -1,75 +1,163 @@
-cmake_minimum_required( VERSION 3.1 )
+include(CMakePackageConfigHelpers)
 
-set( TARGET_NAME adikted )
-project( lib${TARGET_NAME} LANGUAGES C )
-set( PROJECT_DESCRIPTION "Dungeon Keeper 1 ADiKtEd map editor C library" )
+option(USE_RNG_MT "Use Mersenne Twister RNG." ON)
 
-include(GNUInstallDirs)
-include(FindPkgConfig)
+set(adikted_public_headers
+    adikted.h
+    arr_utils.h
+    bulcommn.h
+    dernc.h
+    draw_map.h
+    globals.h
+    graffiti.h
+    lbfileio.h
+    lev_column.h
+    lev_data.h
+    lev_files.h
+    lev_script.h
+    lev_things.h
+    memfile.h
+    msg_log.h
+    obj_actnpts.h
+    obj_column.h
+    obj_column_def.h
+    obj_cube.h
+    obj_slabs.h
+    obj_things.h
+    rng.h
+    xcubtxtr.h
+    xtabdat8.h
+    xtabjty.h
+)
 
-if( NOT CMAKE_BUILD_TYPE )
-	set( CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE )
+set(adikted_sources
+    arr_utils.c
+    bulcommn.c
+    dernc.c
+    draw_map.c
+    graffiti.c
+    graffiti_font.c
+    lbfileio.c
+    lev_column.c
+    lev_data.c
+    lev_files.c
+    lev_script.c
+    lev_things.c
+    libadi_main.c
+    memfile.c
+    msg_log.c
+    obj_actnpts.c
+    obj_column.c
+    obj_column_def.c
+    obj_column_per.c
+    obj_slabs.c
+    obj_things.c
+    rng.c
+    xcubtxtr.c
+    xtabdat8.c
+    xtabjty.c
+)
+
+if(USE_RNG_MT)
+    list(APPEND adikted_sources mtwist/mtwist.c)
 endif()
 
-set(CMAKE_DEBUG_POSTFIX _d)
+add_library(adikted ${adikted_sources})
+add_library(libadikted::adikted ALIAS adikted)
 
-set( CMAKE_C_STANDARD 99 )
-set( CMAKE_C_STANDARD_REQUIRED ON )
-
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-switch" )
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pedantic" )
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wextra" )
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror-implicit-function-declaration -Wno-conversion -Wno-traditional-conversion -Wno-sign-compare" )
-
-## ================= build =================
-
-option( USE_RNG_MT "Use Mersenne Twister RNG" ON )
-if( USE_RNG_MT )
-    add_definitions( -DRNG_MT )
+if(PROJECT_TARGETS_WINDOWS)
+    target_sources(adikted PRIVATE adikted_private.rc)
 endif()
 
+target_compile_features(adikted PUBLIC c_std_99)
+target_include_directories(
+    adikted
+    PUBLIC
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
-
-if( NOT ${TARGET_NAME}_TYPE )
-    ## build library as shared by default
-    set( ${TARGET_NAME}_TYPE SHARED )
+if(USE_RNG_MT)
+    target_compile_definitions(adikted PRIVATE RNG_MT)
 endif()
 
-file( GLOB c_files ${CMAKE_CURRENT_SOURCE_DIR}/*.c)
-file( GLOB h_files ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
-
-if( USE_RNG_MT )
-	list(APPEND h_files "${CMAKE_CURRENT_SOURCE_DIR}/mtwist/mtwist.h" )
-	list(APPEND c_files "${CMAKE_CURRENT_SOURCE_DIR}/mtwist/mtwist.c" )
+if(PROJECT_TARGETS_WINDOWS AND BUILD_SHARED_LIBS)
+    target_compile_definitions(adikted PRIVATE BUILD_DLL USE_FASTCALL)
 endif()
 
+if(MSVC)
+    target_compile_definitions(adikted PRIVATE _CRT_SECURE_NO_WARNINGS)
+else()
+    target_link_libraries(adikted PUBLIC m)
+endif()
 
-add_library( ${TARGET_NAME} ${${TARGET_NAME}_TYPE} ${c_files} )
-set_target_properties( ${TARGET_NAME} PROPERTIES PUBLIC_HEADER "${h_files}" )
-target_include_directories(${TARGET_NAME} PUBLIC
-			$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-			$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/lib${TARGET_NAME}>
-			PRIVATE "."
-			)
-target_link_libraries(${TARGET_NAME} m)
+set_target_properties(
+    adikted
+    PROPERTIES
+        EXPORT_NAME adikted
+        OUTPUT_NAME adikted
+        DEBUG_POSTFIX _d
+        VERSION ${PROJECT_VERSION}
+        SOVERSION ${PROJECT_VERSION_MAJOR}
+)
 
-# pkg-config variables
-set(target_name "${TARGET_NAME}")
-set(stdclibs "${CMAKE_C_STANDARD_LIBRARIES}")
+set(target_name "adikted")
+string(JOIN " " stdclibs ${CMAKE_C_STANDARD_LIBRARIES})
 set(install_prefix "${CMAKE_INSTALL_PREFIX}")
 set(install_libdir "${CMAKE_INSTALL_LIBDIR}")
 set(install_includedir "${CMAKE_INSTALL_INCLUDEDIR}")
-configure_file(lib${TARGET_NAME}.pc.in ${PROJECT_BINARY_DIR}/lib${TARGET_NAME}.pc @ONLY)
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/libadikted.pc.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/libadikted.pc"
+    @ONLY
+)
 
-set(ENV{PKG_CONFIG_PATH} "${PROJECT_BINARY_DIR}:$ENV{PKG_CONFIG_PATH}")
+install(
+    TARGETS adikted
+    EXPORT libadiktedTargets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT binaries
+)
 
-install( TARGETS ${TARGET_NAME} EXPORT lib${TARGET_NAME}Config 
-	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries
-	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT binaries 
-	PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/lib${TARGET_NAME} COMPONENT headers
-        )
+install(FILES ${adikted_public_headers} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libadikted COMPONENT headers)
 
-install(FILES ${PROJECT_BINARY_DIR}/lib${TARGET_NAME}.pc DESTINATION
-	${CMAKE_INSTALL_LIBDIR}/pkgconfig/)
+if(USE_RNG_MT)
+    install(FILES mtwist/mtwist.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libadikted/mtwist COMPONENT headers)
+endif()
 
+install(
+    FILES "${CMAKE_CURRENT_BINARY_DIR}/libadikted.pc"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+    COMPONENT development
+)
+
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/libadiktedConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+configure_package_config_file(
+    "${PROJECT_SOURCE_DIR}/cmake/libadiktedConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/libadiktedConfig.cmake"
+    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/libadikted"
+)
+
+install(
+    EXPORT libadiktedTargets
+    FILE libadiktedTargets.cmake
+    NAMESPACE libadikted::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libadikted
+    COMPONENT development
+)
+
+install(
+    FILES
+        "${CMAKE_CURRENT_BINARY_DIR}/libadiktedConfig.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/libadiktedConfigVersion.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libadikted
+    COMPONENT development
+)

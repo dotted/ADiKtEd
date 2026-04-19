@@ -1,74 +1,97 @@
-cmake_minimum_required( VERSION 3.0 )
-project(mapslang LANGUAGES C)
-set(TARGET_NAME map)
+include("${PROJECT_SOURCE_DIR}/cmake/SlangDependency.cmake")
 
-include(FindPkgConfig)
-include(CMakePackageConfigHelpers)
+set(mapslang_sources
+    input_kb.c
+    main.c
+    output_scr.c
+    scr_actn.c
+    scr_clm.c
+    scr_cube.c
+    scr_help.c
+    scr_list.c
+    scr_rwrk.c
+    scr_slab.c
+    scr_thing.c
+    scr_tileset.c
+    scr_txted.c
+    scr_txtgen.c
+    textmenu.c
+    var_utils.c
+)
 
-set_property( GLOBAL PROPERTY USE_FOLDERS ON )
-set( CMAKE_C_STANDARD 99 )
-set( CMAKE_C_STANDARD_REQUIRED ON )
-set( CMAKE_C_EXTENSIONS ON )
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-discarded-qualifiers -Wno-unused-result -Wno-unused-parameter" )
-add_definitions( -DINSTALL_DATADIR="${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/${TARGET_NAME}" )
-
-set( MAPSLANG_LIBRARY_TYPE     "STATIC" CACHE STRING "Linking type for library" )
-
-set_property( CACHE MAPSLANG_LIBRARY_TYPE PROPERTY STRINGS STATIC SHARED )
-
-if( MAPSLANG_LIBRARY_TYPE MATCHES "SHARED" )
-    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+if(PROJECT_TARGETS_WINDOWS)
+    list(APPEND mapslang_sources map_private.rc)
 endif()
 
-if(POLICY CMP0072)
-  cmake_policy(SET CMP0072 NEW)
+resolve_slang_dependency(
+    mapslang_slang_dependency
+    mapslang_slang_include_dir
+    mapslang_slang_runtime_file
+    mapslang_slang_runtime_destination
+    mapslang_slang_build_rpath
+    mapslang_slang_install_rpath
+)
+
+add_executable(map ${mapslang_sources})
+
+target_compile_features(map PRIVATE c_std_99)
+target_compile_definitions(
+    map
+    PRIVATE
+        INSTALL_DATADIR="${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/map"
+        $<$<CONFIG:Debug>:MAP_DEBUG=0>
+)
+target_compile_options(
+    map
+    PRIVATE
+        $<$<C_COMPILER_ID:GNU,Clang>:-Wno-discarded-qualifiers>
+        $<$<C_COMPILER_ID:GNU,Clang>:-Wno-unused-parameter>
+        $<$<C_COMPILER_ID:GNU,Clang>:-Wno-unused-result>
+)
+target_include_directories(map PRIVATE "${PROJECT_SOURCE_DIR}")
+target_link_libraries(map PRIVATE libadikted::adikted ${mapslang_slang_dependency})
+
+if(mapslang_slang_include_dir)
+    target_include_directories(map PRIVATE "${mapslang_slang_include_dir}")
 endif()
 
-# check for installed slang
-pkg_search_module(SLANG REQUIRED slang)
-# check for installed libadikted
-pkg_search_module(ADIKTED REQUIRED libadikted)
-
-# Grab the keeperfx source files
-file( GLOB MAPSLANG_SOURCES input_kb.c main.c output_scr.c scr_actn.c scr_clm.c scr_cube.c scr_help.c scr_list.c scr_rwrk.c scr_slab.c scr_thing.c scr_tileset.c scr_txted.c scr_txtgen.c textmenu.c var_utils.c )
-
-add_executable( ${TARGET_NAME} ${MAPSLANG_SOURCES} )
-target_include_directories( ${TARGET_NAME}
-	PUBLIC Math::Math
-	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-	$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/..)
-
-target_compile_options( ${TARGET_NAME} PUBLIC ${ADIKTED_CFLAGS} ${SLANG_CFLAGS})
-target_link_libraries( ${TARGET_NAME} PUBLIC ${ADIKTED_LIBRARIES} 
-	${SLANG_LIBRARIES} m)
-
-# Put in a "mapslang" folder in Visual Studio
-set_target_properties( ${TARGET_NAME} PROPERTIES FOLDER "mapslang" )
-
-# Special Visual Studio Flags
-if( MSVC )
-	target_compile_definitions( ${TARGET_NAME} PRIVATE "_CRT_SECURE_NO_WARNINGS" )
+if(MSVC)
+    target_compile_definitions(map PRIVATE _CRT_SECURE_NO_WARNINGS)
+else()
+    target_link_libraries(map PRIVATE m)
 endif()
 
-if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
-	set(CMAKE_BUILD_TYPE "None")
-endif ()
+set_target_properties(map PROPERTIES FOLDER "mapslang")
 
-set(uppercase_CMAKE_BUILD_TYPE TOUPPER "${CMAKE_BUILD_TYPE}" "NONE")
-# Add debug config required in keeperfx headers since bx is private
-if ( uppercase_CMAKE_BUILD_TYPE} STREQUAL "DEBUG" )
-	target_compile_definitions( ${TARGET_NAME} PUBLIC "MAP_DEBUG=0" )
+if(UNIX AND mapslang_slang_build_rpath)
+    set_property(TARGET map APPEND PROPERTY BUILD_RPATH "${mapslang_slang_build_rpath}")
 endif()
 
-install( TARGETS map
-	EXPORT "${TARGETS_EXPORT_NAME}"
-	LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-	ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-	RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
-	RESOURCE DESTINATION "${CMAKE_INSTALL_DATADIR}/${TARGET_NAME}"
-	INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-	)
+if(UNIX AND mapslang_slang_install_rpath)
+    set_property(TARGET map APPEND PROPERTY INSTALL_RPATH "${mapslang_slang_install_rpath}")
+endif()
 
-install(FILES map.hlp map.ini map.ico DESTINATION "${CMAKE_INSTALL_DATADIR}/${TARGET_NAME}"
-	COMPONENT Resources )
+install(
+    TARGETS map
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    COMPONENT binaries
+)
+
+install(
+    FILES map.hlp map.ini map.ico
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/map
+    COMPONENT resources
+)
+
+if(mapslang_slang_runtime_file AND mapslang_slang_runtime_destination)
+    set(mapslang_slang_component libraries)
+    if("${mapslang_slang_runtime_destination}" STREQUAL "${CMAKE_INSTALL_BINDIR}")
+        set(mapslang_slang_component binaries)
+    endif()
+
+    install(
+        FILES "${mapslang_slang_runtime_file}"
+        DESTINATION "${mapslang_slang_runtime_destination}"
+        COMPONENT ${mapslang_slang_component}
+    )
+endif()

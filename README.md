@@ -4,26 +4,59 @@ Note - there is now a manual available for ADiKtEd.
 It even includes a basic tutorial to quickly learn the program.
 A version of it is included within this distribution,
 called `dk_adikted_manual.htm`. You may wish to print this out.
+
 ## Build
 
-### Unix-like systems
+### Root CMake workflow
 
-#### CMake
+Configure from the repository root:
 
-Run 
-`cmake --install-prefix=/usr . && make install`
-and copy the examples to the keeperfx directory
+```sh
+cmake -S . -B build
+cmake --build build
+cmake --install build
+```
 
-### Windows
+Inside an MSYS2 `MINGW32` or `MINGW64` shell, use the default `Unix Makefiles` generator and point CMake at the MinGW compiler if needed:
 
-#### make
+```sh
+cmake -S . -B build-mingw32 -DCMAKE_C_COMPILER=/mingw32/bin/gcc
+cmake --build build-mingw32
+cmake --install build-mingw32
+```
 
-Run `cd libadikted/ && make -f Makefile.win && cd mapslang && make -f Makefile.win`
+Optional switches:
 
-Here's the Win32 version executable. Just put all the
-files in the same directory, edit map.ini as appropriate (you should
-change paths to your DK files; you can also change other parameters
-if you want), and run it.
+- `-DADIKTED_BUILD_EXAMPLES=ON` builds the example programs.
+- `-DMAPSLANG_BUILD=OFF` builds only `libadikted`.
+- `-DMAPSLANG_FETCH_SLANG=ON` fetches and builds S-Lang 2.3.2 when `mapslang` cannot find a system installation. This fallback supports MinGW-based Windows builds plus Unix-like builds on Linux and macOS.
+
+### S-Lang for `mapslang`
+
+`mapslang` depends on Jedsoft S-Lang 2.3.2.
+The CMake build first looks for a system installation and can fall back to fetching either:
+
+- the release tarball: `https://www.jedsoft.org/releases/slang/slang-2.3.2.tar.bz2`
+- the upstream Git tag: `git://git.jedsoft.org/git/slang.git` at `v2.3.2`
+
+The fallback is mainly intended for MinGW-based Windows builds and environments without packaged S-Lang.
+System S-Lang is preferred on every platform.
+For non-MinGW Windows builds, either provide a compatible S-Lang installation or configure with `-DMAPSLANG_BUILD=OFF` to build only `libadikted`.
+
+## Using `libadikted` from another CMake project
+
+After installing `libadikted`, external CMake projects can consume the library with:
+
+```cmake
+find_package(libadikted CONFIG REQUIRED)
+target_link_libraries(my_target PRIVATE libadikted::adikted)
+```
+
+Headers are installed under `include/libadikted`, so consumers can include:
+
+```c
+#include <libadikted/adikted.h>
+```
 
 ## Usage
 
@@ -44,12 +77,14 @@ You can also try looking at the original DK and DD levels for examples.
 Press F1 for help.
 
 ## TODO before final
- Fixations in room things parameters (height,other)
- Fixations in room corner graphics
+
+- Fixations in room things parameters (height,other)
+- Fixations in room corner graphics
 
 ## Author
- Jon Skeet, skeet@pobox.com
+
+Jon Skeet, skeet@pobox.com
 
 Dev-C++ IDE version,
 rewritten most of the code:
- Tomasz Lis
+Tomasz Lis

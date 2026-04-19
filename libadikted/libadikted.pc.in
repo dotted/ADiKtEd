@@ -1,5 +1,5 @@
 prefix=@install_prefix@
-exe_prefix=${prefix}
+exec_prefix=${prefix}
 libdir=${prefix}/@install_libdir@
 includedir=${prefix}/@install_includedir@
 
@@ -8,5 +8,5 @@ Description: @PROJECT_DESCRIPTION@
 Version: @PROJECT_VERSION@
 
 Requires:
-Libs: -L${libdir} -l@target_name@ @stdclib@
-Cflags: -I${includedir} -I${includedir}/@target_name@
+Libs: -L${libdir} -l@target_name@ @stdclibs@
+Cflags: -I${includedir}
