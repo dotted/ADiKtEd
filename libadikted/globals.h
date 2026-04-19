@@ -26,17 +26,26 @@
 #include <limits.h>
 #include <time.h>
 
+#if !defined(PROJECT_TARGETS_WINDOWS) && !defined(MSDOS)
+#include <strings.h>
+#endif
+
 #if defined(unix) && !defined(GO32)
 #include <unistd.h>
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <termios.h>
-#if !defined(stricmp)
-#define stricmp strcasecmp
-#endif
 #elif defined(MSDOS)
 #include <dos.h>
 #include <process.h>
+#endif
+
+#if !defined(stricmp)
+#if defined(PROJECT_TARGETS_WINDOWS)
+#define stricmp _stricmp
+#else
+#define stricmp strcasecmp
+#endif
 #endif
 
 #if defined(BUILD_DLL)

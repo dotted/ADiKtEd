@@ -212,7 +212,7 @@ function(_configure_slang_unix_fallback out_target out_include_dir out_runtime_f
             -DSLANG_SOURCE_DIR=${slang_source_dir}
             -DSLANG_MAKE_PROGRAM=${slang_make_program}
             -P ${PROJECT_SOURCE_DIR}/cmake/slang/BuildSlangUnix.cmake
-        INSTALL_COMMAND "${slang_make_program}" install
+        INSTALL_COMMAND "${slang_make_program}" -j1 install
         BUILD_IN_SOURCE 1
         BUILD_BYPRODUCTS "${slang_stage_library}" "${slang_stage_include_dir}/slang.h"
     )

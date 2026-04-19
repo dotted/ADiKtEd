@@ -38,6 +38,8 @@ target_compile_features(map PRIVATE c_std_99)
 target_compile_definitions(
     map
     PRIVATE
+        $<$<BOOL:${PROJECT_TARGETS_WINDOWS}>:PROJECT_TARGETS_WINDOWS>
+        $<$<NOT:$<BOOL:${PROJECT_TARGETS_WINDOWS}>>:_POSIX_C_SOURCE=200809L>
         INSTALL_DATADIR="${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/map"
         $<$<CONFIG:Debug>:MAP_DEBUG=0>
 )

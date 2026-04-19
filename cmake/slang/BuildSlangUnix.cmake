@@ -8,6 +8,7 @@ endif()
 
 execute_process(
     COMMAND "${SLANG_MAKE_PROGRAM}"
+            -j1
     WORKING_DIRECTORY "${SLANG_SOURCE_DIR}"
     COMMAND_ECHO STDOUT
     RESULT_VARIABLE slang_build_result

@@ -79,6 +79,14 @@ target_include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+target_compile_definitions(
+    adikted
+    PUBLIC
+        $<$<BOOL:${PROJECT_TARGETS_WINDOWS}>:PROJECT_TARGETS_WINDOWS>
+    PRIVATE
+        $<$<NOT:$<BOOL:${PROJECT_TARGETS_WINDOWS}>>:_POSIX_C_SOURCE=200809L>
+)
+
 if(USE_RNG_MT)
     target_compile_definitions(adikted PRIVATE RNG_MT)
 endif()
