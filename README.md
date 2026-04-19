@@ -101,8 +101,6 @@ Additional external reference:
 
 - [Dungeon Keeper documentation mirror](https://keeper.lubiki.pl/dk1_docs/)
 
-The external mirror appears to include fan-maintained and expanded documentation, especially around scripting and editor usage. It is a helpful cross-reference when the bundled docs look incomplete or stale, but the repository build files remain authoritative for how this project is configured and packaged today.
-
 ## History And Maintainers
 
 - Original creator: [Jon Skeet](https://jonskeet.uk/dk/)
